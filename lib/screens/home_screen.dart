@@ -1,7 +1,7 @@
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../config/app_colors.dart';
 import '../config/app_sizes.dart';
 import '../models/app_settings.dart';
@@ -39,28 +39,25 @@ class _HomeScreenState extends State<HomeScreen> {
     // Play sound if enabled
     if (settings.soundEnabled) {
       try {
-        await _audioPlayer.play(AssetSource('audio/dice_roll.mp3'));
+        await _audioPlayer.play(AssetSource('audio/sound.mp3'));
       } catch (e) {
         // Sound file not found, continue without sound
         debugPrint('Sound file not found: $e');
       }
     }
 
-    // Generate random values
     for (int i = 0; i < 4; i++) {
       if (settings.activeDice[i]) {
         _diceValues[i] = _random.nextInt(6) + 1;
       }
     }
 
-    // Wait for animation to complete
     await Future.delayed(const Duration(milliseconds: 1500));
 
     setState(() {
       _isRolling = false;
     });
 
-    // Handle turn progression based on all-6s rule
     final playerGetsAnotherTurn = settings.handleDiceRoll(_diceValues);
 
     // Show notification if player got all 6s
@@ -170,7 +167,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox.shrink(),
 
           // Title
-          Text('Dice Roller', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            'Dice Roller',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
 
           // Active dice count
           Container(
@@ -179,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               vertical: AppSizes.paddingS,
             ),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withAlpha(70),
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
             ),
             child: Row(

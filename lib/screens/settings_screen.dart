@@ -11,11 +11,32 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(
+            Icons.arrow_back,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        centerTitle: false,
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).textTheme.titleLarge?.color,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
             // Header
-            _buildHeader(context),
+            // _buildHeader(context),
             // Settings list
             Expanded(
               child: ListView(
@@ -710,14 +731,14 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 Icon(
                   Icons.refresh,
-                  color: Theme.of(context).colorScheme.error,
+                  color: Theme.of(context).colorScheme.onError,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Reset Dice Configuration',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
+                    color: Theme.of(context).colorScheme.onError,
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),

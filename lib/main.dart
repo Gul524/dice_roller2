@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:upgrader/upgrader.dart';
 import 'config/app_theme.dart';
 import 'models/app_settings.dart';
 import 'screens/splash_screen.dart';
@@ -24,7 +25,7 @@ class MainApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.materialThemeMode,
-            home: const SplashScreen(),
+            home: UpgradeAlert(child: const SplashScreen()),
           );
         },
       ),

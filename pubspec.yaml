@@ -10,10 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.1.2
-  audioplayers: ^6.1.0
   shared_preferences: ^2.3.4
   flutter_animate: ^4.5.0
+  upgrader: ^11.5.0
   flutter_launcher_icons: ^0.14.4
+  audioplayers: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -23,7 +24,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/audio/
+    - assets/audio/sound.mp3
 
 flutter_icons:
   android: true
