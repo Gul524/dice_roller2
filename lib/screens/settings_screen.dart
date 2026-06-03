@@ -1,11 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../config/app_colors.dart';
+import '../config/app_info.dart';
 import '../config/app_sizes.dart';
 import '../models/app_settings.dart';
+import 'privacy_policy_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+
+  // ─── External URL helpers ───────────────────────────────────────────────────
+
+  /// Opens the Privacy Policy in the in-app viewer.
+  static void _openPrivacyPolicyInApp(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+    );
+  }
+
+  /// Opens the Privacy Policy URL in the device's default browser.
+  /// Shows a SnackBar if the URL cannot be launched (e.g. no browser installed).
+  static Future<void> _openPrivacyPolicyOnline(BuildContext context) async {
+    final uri = Uri.parse(AppInfo.privacyPolicyUrl);
+    try {
+      final canLaunch = await canLaunchUrl(uri);
+      if (canLaunch) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showLaunchError(
+          context,
+          'Could not open browser. Visit: ${AppInfo.privacyPolicyUrl}',
+        );
+      }
+    } catch (_) {
+      _showLaunchError(
+        context,
+        'Could not open the link. Visit: ${AppInfo.privacyPolicyUrl}',
+      );
+    }
+  }
+
+  /// Composes a pre-filled email to the developer.
+  /// Shows a SnackBar with the email address if no mail app is available.
+  static Future<void> _openEmail(BuildContext context) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: AppInfo.developerEmail,
+      queryParameters: {'subject': 'Dice Roller - Feedback'},
+    );
+    try {
+      final canLaunch = await canLaunchUrl(uri);
+      if (canLaunch) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        _showLaunchError(
+          context,
+          'No email app found. Reach us at: ${AppInfo.developerEmail}',
+        );
+      }
+    } catch (_) {
+      _showLaunchError(
+        context,
+        'Could not open email app. Reach us at: ${AppInfo.developerEmail}',
+      );
+    }
+  }
+
+  static void _showLaunchError(BuildContext context, String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +146,14 @@ class SettingsScreen extends StatelessWidget {
 
                   const SizedBox(height: AppSizes.paddingXL),
 
-                  _buildResetButton(context),
+                  const SizedBox(height: AppSizes.paddingL),
+
+                  _buildSectionTitle(context, 'About & Legal'),
+                  _buildAboutSection(context),
+
+                  const SizedBox(height: AppSizes.paddingL),
+
+                  _buildAppVersion(context),
                 ],
               ),
             ),
@@ -270,39 +350,64 @@ class SettingsScreen extends StatelessWidget {
           context,
           icon: Icons.people,
           title: 'Number of Players',
-          subtitle: 'Set how many players are playing',
+          subtitle: 'Set how many players are playing (2 - 6)',
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: List.generate(3, (index) {
-                final count = index + 2; // 2, 3, 4 players
+              children: List.generate(5, (index) {
+                final count = index + 2; // 2, 3, 4, 5, 6 players
                 final isSelected = settings.numberOfPlayers == count;
+                final ludoColors = AppColors.getLudoColors(count);
+                // Show the first player's color as button accent when selected
+                final playerColor = ludoColors.isNotEmpty
+                    ? ludoColors[0]
+                    : null;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: GestureDetector(
                     onTap: () => settings.setNumberOfPlayers(count),
-                    child: Container(
-                      width: 40,
-                      height: 40,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Theme.of(context).colorScheme.primary
+                            ? (playerColor ??
+                                  Theme.of(context).colorScheme.primary)
                             : Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
+                          color: isSelected
+                              ? (playerColor ??
+                                    Theme.of(context).colorScheme.primary)
+                              : Theme.of(context).colorScheme.outlineVariant,
+                          width: isSelected ? 2 : 1,
                         ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      (playerColor ??
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.primary)
+                                          .withOpacity(0.35),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Center(
                         child: Text(
                           '$count',
                           style: TextStyle(
                             color: isSelected
-                                ? Theme.of(context).colorScheme.onPrimary
+                                ? Colors.white
                                 : Theme.of(context).textTheme.bodyMedium?.color,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
                           ),
                         ),
                       ),
@@ -618,6 +723,7 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Consumer<AppSettings>(
       builder: (context, settings, child) {
+        final ludoColors = AppColors.getLudoColors(settings.numberOfPlayers);
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
           padding: const EdgeInsets.all(AppSizes.paddingM),
@@ -628,7 +734,7 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                'Player Turn Colors',
+                'Player Turn Colors (${settings.numberOfPlayers} Players)',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -636,23 +742,38 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSizes.paddingM),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
                 children: List.generate(settings.numberOfPlayers, (index) {
+                  final color = ludoColors.isNotEmpty
+                      ? ludoColors[index]
+                      : AppColors.playerColors6[index];
+                  final isActive = settings.currentPlayerIndex == index;
                   return Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 50,
-                        height: 50,
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: isActive ? 56 : 50,
+                        height: isActive ? 56 : 50,
                         decoration: BoxDecoration(
-                          color: AppColors.playerColors[index],
+                          color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: settings.currentPlayerIndex == index
+                            color: isActive
                                 ? theme.colorScheme.onSurface
-                                : Colors.transparent,
-                            width: 3,
+                                : color.withOpacity(0.4),
+                            width: isActive ? 3 : 1.5,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: color.withOpacity(isActive ? 0.5 : 0.25),
+                              blurRadius: isActive ? 12 : 4,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: Center(
                           child: Text(
@@ -661,16 +782,24 @@ class SettingsScreen extends StatelessWidget {
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 20,
+                              shadows: [
+                                Shadow(color: Colors.black26, blurRadius: 2),
+                              ],
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Player ${index + 1}',
+                        'P${index + 1}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: theme.textTheme.bodyMedium?.color,
+                          fontWeight: isActive
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: isActive
+                              ? color
+                              : theme.textTheme.bodyMedium?.color,
                         ),
                       ),
                     ],
@@ -678,73 +807,6 @@ class SettingsScreen extends StatelessWidget {
                 }),
               ),
             ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildResetButton(BuildContext context) {
-    return Consumer<AppSettings>(
-      builder: (context, settings, child) {
-        return GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Reset Dice'),
-                content: const Text('Reset all dice to default configuration?'),
-                actions: [
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      settings.resetDice();
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'Reset',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
-            padding: const EdgeInsets.all(AppSizes.paddingM),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.errorContainer,
-              borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.error.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.refresh,
-                  color: Theme.of(context).colorScheme.onError,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Reset Dice Configuration',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onError,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
           ),
         );
       },
@@ -770,43 +832,195 @@ class SettingsScreen extends StatelessWidget {
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusM),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppSizes.paddingS),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            ),
-            child: Icon(icon, color: colorScheme.primary, size: AppSizes.iconM),
+          // Top row: icon + title/subtitle
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSizes.paddingS),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                ),
+                child: Icon(
+                  icon,
+                  color: colorScheme.primary,
+                  size: AppSizes.iconM,
+                ),
+              ),
+              const SizedBox(width: AppSizes.paddingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSizes.paddingM),
-          Expanded(
+          // Bottom row: trailing pinned to the right
+          const SizedBox(height: AppSizes.paddingS),
+          Align(alignment: Alignment.centerRight, child: trailing),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context) {
+    return Column(
+      children: [
+        // In-app privacy policy viewer
+        _buildInfoCard(
+          context,
+          icon: Icons.privacy_tip_outlined,
+          title: 'Privacy Policy',
+          subtitle: 'View how we handle your data',
+          onTap: () => _openPrivacyPolicyInApp(context),
+        ),
+        const SizedBox(height: AppSizes.paddingS),
+        // External browser — required by Google Play for a publicly reachable URL
+        _buildInfoCard(
+          context,
+          icon: Icons.open_in_browser_outlined,
+          title: 'Privacy Policy (Online)',
+          subtitle: 'Open full policy in your browser',
+          onTap: () => _openPrivacyPolicyOnline(context),
+        ),
+        const SizedBox(height: AppSizes.paddingS),
+        // Email — uses canLaunchUrl + queryParameters (RFC 6068 compliant)
+        _buildInfoCard(
+          context,
+          icon: Icons.email_outlined,
+          title: 'Contact Developer',
+          subtitle: AppInfo.developerEmail,
+          onTap: () => _openEmail(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback? onTap,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          vertical: AppSizes.paddingXS,
+          horizontal: AppSizes.paddingS,
+        ),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingS),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              ),
+              child: Icon(
+                icon,
+                color: colorScheme.primary,
+                size: AppSizes.iconM,
+              ),
+            ),
+            const SizedBox(width: AppSizes.paddingM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.titleMedium?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              Icon(
+                Icons.chevron_right,
+                color: colorScheme.primary,
+                size: AppSizes.iconM,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppVersion(BuildContext context) {
+    final theme = Theme.of(context);
+    return FutureBuilder<String>(
+      future: AppInfo.versionLabel(),
+      builder: (context, snapshot) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  snapshot.data ?? 'v...',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: theme.textTheme.titleMedium?.color,
+                    fontSize: 12,
+                    color: theme.textTheme.bodySmall?.color,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  '© 2026 ${AppInfo.developerName}',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: theme.textTheme.bodyMedium?.color,
+                    fontSize: 11,
+                    color: theme.textTheme.bodySmall?.color,
                   ),
                 ),
               ],
             ),
           ),
-          trailing,
-        ],
-      ),
+        );
+      },
     );
   }
 }

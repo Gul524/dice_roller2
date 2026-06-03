@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../config/app_colors.dart';
+import '../config/app_info.dart';
 import '../config/app_sizes.dart';
 import 'home_screen.dart';
 
@@ -12,9 +13,12 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  late final Future<String> _appVersionFuture;
+
   @override
   void initState() {
     super.initState();
+    _appVersionFuture = AppInfo.versionLabel();
     _navigateToHome();
   }
 
@@ -117,6 +121,18 @@ class _SplashScreenState extends State<SplashScreen> {
                 .animate()
                 .fadeIn(delay: const Duration(milliseconds: 700))
                 .slideY(begin: 0.3, end: 0),
+
+            const SizedBox(height: AppSizes.paddingM),
+
+            FutureBuilder<String>(
+              future: _appVersionFuture,
+              builder: (context, snapshot) {
+                return Text(
+                  snapshot.data ?? 'v...',
+                  style: Theme.of(context).textTheme.bodySmall,
+                );
+              },
+            ).animate().fadeIn(delay: const Duration(milliseconds: 900)),
           ],
         ),
       ),

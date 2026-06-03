@@ -48,8 +48,9 @@ class AppSettings extends ChangeNotifier {
     if (!_colorEffectEnabled) {
       return AppColors.diceBoard;
     }
-    return AppColors.playerColors[_currentPlayerIndex %
-        AppColors.playerColors.length];
+    final colors = AppColors.getLudoColors(_numberOfPlayers);
+    if (colors.isEmpty) return AppColors.diceBoard;
+    return colors[_currentPlayerIndex % colors.length];
   }
 
   double get diceSizeValue {
@@ -145,7 +146,7 @@ class AppSettings extends ChangeNotifier {
   }
 
   void setNumberOfPlayers(int count) {
-    if (count >= 2 && count <= 4) {
+    if (count >= 2 && count <= 6) {
       _numberOfPlayers = count;
       if (_currentPlayerIndex >= count) {
         _currentPlayerIndex = 0;

@@ -115,7 +115,15 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Player indicator
+          Text(
+            'Dice Roller',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
           if (settings.colorEffectEnabled)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,40 +175,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox.shrink(),
 
           // Title
-          Text(
-            'Dice Roller',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          // Active dice count
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.paddingM,
-              vertical: AppSizes.paddingS,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withAlpha(70),
-              borderRadius: BorderRadius.circular(AppSizes.radiusL),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.grid_view, size: 16, color: AppColors.primary),
-                const SizedBox(width: 4),
-                Text(
-                  '${settings.activeDiceCount}',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

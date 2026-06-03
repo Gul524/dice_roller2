@@ -1,4 +1,4 @@
-package com.example.dice_roller2
+package com.sulemangul.dice_roller
 
 import io.flutter.embedding.android.FlutterActivity
 

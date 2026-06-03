@@ -20,12 +20,53 @@ class AppColors {
   static const Color diceBoardLight = Color(0xFF2C2C2E);
 
   // Player colors (for turn indication like Ludo)
-  static const List<Color> playerColors = [
-    Color(0xFFFF3B30), // Red
-    Color(0xFF34C759), // Green
-    Color(0xFFFFCC00), // Yellow
-    Color(0xFF007AFF), // Blue
+  static const List<Color> playerColors6 = [
+    Color(0xFF34C759), // 0: Green
+    Color(0xFFFFCC00), // 1: Yellow
+    Color(0xFFFF9500), // 2: Orange
+    Color(0xFF007AFF), // 3: Blue
+    Color(0xFFAF52DE), // 4: Purple
+    Color(0xFFFF3B30), // 5: Red
   ];
+
+  /// Alias kept for backward compatibility — full 6-player palette.
+  static List<Color> get playerColors => playerColors6;
+
+  /// Returns the correct Ludo colors for [totalPlayers] (2–6).
+  static List<Color> getLudoColors(int totalPlayers) {
+    switch (totalPlayers) {
+      case 2:
+        return [
+          playerColors6[0], // Green
+          playerColors6[3], // Blue (Opposite to Green)
+        ];
+      case 3:
+        return [
+          playerColors6[0], // Green
+          playerColors6[2], // Orange (Triangular spacing)
+          playerColors6[4], // Purple
+        ];
+      case 4:
+        return [
+          playerColors6[0], // Green
+          playerColors6[1], // Yellow
+          playerColors6[3], // Blue
+          playerColors6[5], // Red
+        ];
+      case 5:
+        return [
+          playerColors6[0], // Green
+          playerColors6[1], // Yellow
+          playerColors6[2], // Orange
+          playerColors6[3], // Blue
+          playerColors6[5], // Red
+        ];
+      case 6:
+        return List.from(playerColors6);
+      default:
+        return [];
+    }
+  }
 
   // Dice colors
   static const Color diceWhite = Color(0xFFFFFFFF);
